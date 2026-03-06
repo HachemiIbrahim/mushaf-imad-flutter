@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
 import '../../domain/models/audio_player_state.dart';
 import '../../domain/models/reciter_info.dart';
 import '../../domain/models/reciter_timing.dart';
@@ -65,19 +67,79 @@ class DefaultAudioRepository implements AudioRepository {
     }
   }
 
+  // Tracks what is currently loaded to avoid race conditions from double loads
+  int? _loadedChapter;
+  int? _loadedReciterId;
+
   @override
-  void loadChapter(
+  Future<void> loadChapter(
     int chapterNumber,
     int reciterId, {
     bool autoPlay = false,
+    required int startVerseNumber,
   }) async {
+    debugPrint(
+      '[DefaultAudioRepository] loadChapter → chapter=$chapterNumber, reciter=$reciterId, startVerse=$startVerseNumber, autoPlay=$autoPlay',
+    );
+
     final reciter = await _reciterService.getReciterById(reciterId);
-    if (reciter != null) {
-      await _audioPlayer.loadChapter(
-        chapterNumber,
-        reciter,
-        autoPlay: autoPlay,
+    if (reciter == null) {
+      debugPrint(
+        '[DefaultAudioRepository] loadChapter → reciter NOT FOUND for id=$reciterId',
       );
+      return;
+    }
+
+    // Only reload audio if chapter or reciter changed.
+    // This prevents the race where _initViewModel (verse=1) and
+    // didUpdateWidget (verse=10) both call loadChapter — the first reload
+    // completing after the second seek would reset position to 0.
+    final needsLoad =
+        _loadedChapter != chapterNumber || _loadedReciterId != reciterId;
+
+    if (needsLoad) {
+      await _audioPlayer.loadChapter(chapterNumber, reciter, autoPlay: false);
+      _loadedChapter = chapterNumber;
+      _loadedReciterId = reciterId;
+      debugPrint(
+        '[DefaultAudioRepository] loadChapter → audio loaded for chapter=$chapterNumber',
+      );
+    } else {
+      debugPrint(
+        '[DefaultAudioRepository] loadChapter → chapter already loaded, skipping reload',
+      );
+    }
+
+    // Always seek — even for verse 1 (seek to zero) so position is deterministic
+    if (startVerseNumber > 1) {
+      final timing = await _ayahTimingService.getAyahTiming(
+        reciterId,
+        chapterNumber,
+        startVerseNumber,
+      );
+
+      if (timing != null) {
+        debugPrint(
+          '[DefaultAudioRepository] loadChapter → seeking to verse=$startVerseNumber at ${timing.startTime}ms',
+        );
+        await _audioPlayer.seek(Duration(milliseconds: timing.startTime));
+      } else {
+        debugPrint(
+          '[DefaultAudioRepository] loadChapter → ⚠️ NO timing found for verse=$startVerseNumber — seeking to start',
+        );
+        await _audioPlayer.seek(Duration.zero);
+      }
+    } else {
+      debugPrint(
+        '[DefaultAudioRepository] loadChapter → startVerse=1, seeking to beginning',
+      );
+      await _audioPlayer.seek(Duration.zero);
+    }
+
+    // Start playback if required
+    if (autoPlay) {
+      await _audioPlayer.play();
+      debugPrint('[DefaultAudioRepository] loadChapter → playback started');
     }
   }
 
@@ -103,11 +165,6 @@ class DefaultAudioRepository implements AudioRepository {
   @override
   bool isRepeatEnabled() => _audioPlayer.isRepeatMode();
 
-  // These synchronous getters might need an async await if audio_service is isolated,
-  // but just_audio within BaseAudioHandler holds synchronous state if in same isolate.
-  // For now, these are not strictly available synchronously from base handler, so we can stub
-  // or return default if we don't store them locally anymore. We'll return 0 for now since
-  // UI mostly relies on the Stream<AudioPlayerState>.
   @override
   int getCurrentPosition() => 0;
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../domain/models/reciter_timing.dart';
@@ -36,12 +37,41 @@ class AyahTimingService {
     int ayahNumber,
   ) async {
     final timing = await loadTimingData(reciterId);
-    if (timing == null) return null;
-
+    if (timing == null) {
+      debugPrint('[AyahTimingService] ❌ No timing data for reciter=$reciterId');
+      return null;
+    }
     try {
       final chapter = timing.chapters.firstWhere((c) => c.id == chapterNumber);
-      return chapter.ayaTiming.firstWhere((a) => a.ayah == ayahNumber);
+      final ayah = chapter.ayaTiming.firstWhere((a) => a.ayah == ayahNumber);
+
+      // DEBUG: print what we found
+      debugPrint(
+        '[AyahTimingService] getAyahTiming → '
+        'reciter=$reciterId, chapter=$chapterNumber, ayah=$ayahNumber → '
+        'start=${ayah.startTime}ms, end=${ayah.endTime}ms',
+      );
+
+      // DEBUG: also print surrounding ayahs for context
+      final idx = chapter.ayaTiming.indexOf(ayah);
+      for (
+        int i = (idx - 2).clamp(0, chapter.ayaTiming.length - 1);
+        i <= (idx + 2).clamp(0, chapter.ayaTiming.length - 1);
+        i++
+      ) {
+        final t = chapter.ayaTiming[i];
+        final marker = t.ayah == ayahNumber ? ' ◄◄◄' : '';
+        debugPrint(
+          '[AyahTimingService]   [$i] ayah=${t.ayah}, '
+          'start=${t.startTime}ms, end=${t.endTime}ms$marker',
+        );
+      }
+
+      return ayah;
     } catch (_) {
+      debugPrint(
+        '[AyahTimingService] ❌ ayah=$ayahNumber not found in chapter=$chapterNumber',
+      );
       return null;
     }
   }
