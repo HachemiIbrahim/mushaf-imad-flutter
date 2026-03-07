@@ -9,7 +9,7 @@ class ReciterDataProvider {
   /// List of all available reciters with timing data.
   static const List<ReciterInfo> allReciters = [
     ReciterInfo(
-      id: 1,
+      id: 53,
       nameArabic: 'عبد الباسط عبد الصمد',
       nameEnglish: 'Abdul Basit Abdul Samad',
       rewaya: 'حفص عن عاصم',
