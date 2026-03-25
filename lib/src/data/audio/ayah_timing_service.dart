@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:imad_flutter/imad_flutter.dart';
 
@@ -51,20 +52,21 @@ class AyahTimingService {
         'reciter=$reciterId, chapter=$chapterNumber, ayah=$ayahNumber → '
         'start=${ayah.startTime}ms, end=${ayah.endTime}ms',
       );
-
-      // DEBUG: also print surrounding ayahs for context
-      final idx = chapter.ayaTiming.indexOf(ayah);
-      for (
-        int i = (idx - 2).clamp(0, chapter.ayaTiming.length - 1);
-        i <= (idx + 2).clamp(0, chapter.ayaTiming.length - 1);
-        i++
-      ) {
-        final t = chapter.ayaTiming[i];
-        final marker = t.ayah == ayahNumber ? ' ◄◄◄' : '';
-        MushafLibrary.logger.debug(
-          '[AyahTimingService]   [$i] ayah=${t.ayah}, '
-          'start=${t.startTime}ms, end=${t.endTime}ms$marker',
-        );
+      if (kDebugMode) {
+        // DEBUG: also print surrounding ayahs for context
+        final idx = chapter.ayaTiming.indexOf(ayah);
+        for (
+          int i = (idx - 2).clamp(0, chapter.ayaTiming.length - 1);
+          i <= (idx + 2).clamp(0, chapter.ayaTiming.length - 1);
+          i++
+        ) {
+          final t = chapter.ayaTiming[i];
+          final marker = t.ayah == ayahNumber ? ' ◄◄◄' : '';
+          MushafLibrary.logger.debug(
+            '[AyahTimingService]   [$i] ayah=${t.ayah}, '
+            'start=${t.startTime}ms, end=${t.endTime}ms$marker',
+          );
+        }
       }
 
       return ayah;

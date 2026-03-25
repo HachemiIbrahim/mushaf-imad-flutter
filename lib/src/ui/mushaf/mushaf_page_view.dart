@@ -193,9 +193,14 @@ class MushafPageViewState extends State<MushafPageView> {
     final audioChapterNumber =
         _tappedChapterNumber ??
         (chapters.isNotEmpty ? chapters.first.number : 1);
-    final audioChapterName = chapters.isNotEmpty
-        ? chapters.first.arabicTitle
-        : '';
+    final audioChapterName = _tappedChapterNumber != null
+        ? chapters
+              .firstWhere(
+                (c) => c.number == _tappedChapterNumber,
+                orElse: () => chapters.first,
+              )
+              .arabicTitle
+        : (chapters.isNotEmpty ? chapters.first.arabicTitle : '');
 
     final scopeNotifier = MushafThemeScope.maybeOf(context);
     final effectiveTheme = scopeNotifier?.readingTheme ?? widget.readingTheme;
