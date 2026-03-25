@@ -1,14 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-
-import '../../domain/models/audio_player_state.dart';
-import '../../domain/models/reciter_info.dart';
-import '../../domain/models/reciter_timing.dart';
-import '../../domain/repository/audio_repository.dart';
 import '../audio/ayah_timing_service.dart';
 import '../audio/flutter_audio_player.dart';
 import '../audio/reciter_service.dart';
+import 'package:imad_flutter/imad_flutter.dart';
 
 /// Default implementation of AudioRepository.
 class DefaultAudioRepository implements AudioRepository {
@@ -76,15 +71,15 @@ class DefaultAudioRepository implements AudioRepository {
     int chapterNumber,
     int reciterId, {
     bool autoPlay = false,
-    required int startVerseNumber,
+    int startVerseNumber = 1,
   }) async {
-    debugPrint(
+    MushafLibrary.logger.debug(
       '[DefaultAudioRepository] loadChapter → chapter=$chapterNumber, reciter=$reciterId, startVerse=$startVerseNumber, autoPlay=$autoPlay',
     );
 
-    final reciter = await _reciterService.getReciterById(reciterId);
+    final reciter = _reciterService.getReciterById(reciterId);
     if (reciter == null) {
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[DefaultAudioRepository] loadChapter → reciter NOT FOUND for id=$reciterId',
       );
       return;
@@ -101,11 +96,11 @@ class DefaultAudioRepository implements AudioRepository {
       await _audioPlayer.loadChapter(chapterNumber, reciter, autoPlay: false);
       _loadedChapter = chapterNumber;
       _loadedReciterId = reciterId;
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[DefaultAudioRepository] loadChapter → audio loaded for chapter=$chapterNumber',
       );
     } else {
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[DefaultAudioRepository] loadChapter → chapter already loaded, skipping reload',
       );
     }
@@ -119,18 +114,18 @@ class DefaultAudioRepository implements AudioRepository {
       );
 
       if (timing != null) {
-        debugPrint(
+        MushafLibrary.logger.debug(
           '[DefaultAudioRepository] loadChapter → seeking to verse=$startVerseNumber at ${timing.startTime}ms',
         );
         await _audioPlayer.seek(Duration(milliseconds: timing.startTime));
       } else {
-        debugPrint(
+        MushafLibrary.logger.debug(
           '[DefaultAudioRepository] loadChapter → ⚠️ NO timing found for verse=$startVerseNumber — seeking to start',
         );
         await _audioPlayer.seek(Duration.zero);
       }
     } else {
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[DefaultAudioRepository] loadChapter → startVerse=1, seeking to beginning',
       );
       await _audioPlayer.seek(Duration.zero);
@@ -139,7 +134,9 @@ class DefaultAudioRepository implements AudioRepository {
     // Start playback if required
     if (autoPlay) {
       await _audioPlayer.play();
-      debugPrint('[DefaultAudioRepository] loadChapter → playback started');
+      MushafLibrary.logger.debug(
+        '[DefaultAudioRepository] loadChapter → playback started',
+      );
     }
   }
 

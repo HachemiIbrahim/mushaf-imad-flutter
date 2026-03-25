@@ -31,7 +31,7 @@ class MushafPageView extends StatefulWidget {
 }
 
 class MushafPageViewState extends State<MushafPageView> {
-   PageController? _pageController;
+  PageController? _pageController;
   int _currentPage = 0;
   int? _selectedVerseKey; // chapterNumber * 1000 + verseNumber
 
@@ -100,7 +100,6 @@ class MushafPageViewState extends State<MushafPageView> {
     );
   }
 
-
   Future<void> _loadVerseData() async {
     await VerseDataProvider.instance.initialize();
 
@@ -156,7 +155,6 @@ class MushafPageViewState extends State<MushafPageView> {
 
     mushafGetIt<PreferencesRepository>().setCurrentPage(newPage);
   }
-
 
   void _goToNextPage() {
     if (_currentPage < QuranDataProvider.totalPages) {

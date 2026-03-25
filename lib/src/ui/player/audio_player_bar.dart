@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../data/quran/verse_data_provider.dart';
-import '../../di/core_module.dart';
-import '../../domain/models/audio_player_state.dart';
-import '../../domain/repository/audio_repository.dart';
-import '../../domain/repository/preferences_repository.dart';
-import 'quran_player_view_model.dart';
+import 'package:imad_flutter/imad_flutter.dart';
 
 /// A bottom bar widget that provides audio playback controls for the Mujawwad/Quran recitations.
 class AudioPlayerBar extends StatefulWidget {
@@ -51,7 +46,7 @@ class _AudioPlayerBarState extends State<AudioPlayerBar> {
   ///   3. Fallback: verse 1
   int _resolveStartVerse() {
     if (widget.startVerseNumber != null) {
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[AudioPlayerBar] _resolveStartVerse → explicit startVerseNumber=${widget.startVerseNumber}',
       );
       return widget.startVerseNumber!;
@@ -61,13 +56,15 @@ class _AudioPlayerBarState extends State<AudioPlayerBar> {
       final verses = VerseDataProvider.instance.getVersesForPage(
         widget.currentPage!,
       );
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[AudioPlayerBar] _resolveStartVerse → page=${widget.currentPage}, versesOnPage=${verses.length}, first=${verses.isNotEmpty ? verses.first.number : "NONE"}',
       );
       if (verses.isNotEmpty) return verses.first.number;
     }
 
-    debugPrint('[AudioPlayerBar] _resolveStartVerse → fallback verse=1');
+    MushafLibrary.logger.debug(
+      '[AudioPlayerBar] _resolveStartVerse → fallback verse=1',
+    );
     return 1;
   }
 
@@ -79,7 +76,7 @@ class _AudioPlayerBarState extends State<AudioPlayerBar> {
 
       if (widget.chapterNumber > 0 && _viewModel.selectedReciter != null) {
         final startVerse = _resolveStartVerse();
-        debugPrint(
+        MushafLibrary.logger.debug(
           '[AudioPlayerBar] _initViewModel → chapter=${widget.chapterNumber}, reciter=${_viewModel.selectedReciter!.id}, startVerse=$startVerse, autoPlay=${widget.autoPlay}',
         );
         await mushafGetIt<AudioRepository>().loadChapter(
@@ -111,7 +108,7 @@ class _AudioPlayerBarState extends State<AudioPlayerBar> {
     if (_viewModel.selectedReciter == null) return;
 
     final startVerse = _resolveStartVerse();
-    debugPrint(
+    MushafLibrary.logger.debug(
       '[AudioPlayerBar] didUpdateWidget → chapter=${widget.chapterNumber} (chapterChanged=$chapterChanged), page=${widget.currentPage} (pageChanged=$pageChanged), startVerse=$startVerse (verseChanged=$verseChanged)',
     );
 

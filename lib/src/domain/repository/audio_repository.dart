@@ -37,7 +37,7 @@ abstract class AudioRepository {
     int chapterNumber,
     int reciterId, {
     bool autoPlay = false,
-    required int startVerseNumber,
+    int startVerseNumber = 1,
   });
 
   /// Start or resume playback.

@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../../domain/models/reciter_timing.dart';
+import 'package:imad_flutter/imad_flutter.dart';
 
 /// Service for loading and querying verse timing data for audio sync.
 /// Internal implementation.
@@ -38,7 +36,9 @@ class AyahTimingService {
   ) async {
     final timing = await loadTimingData(reciterId);
     if (timing == null) {
-      debugPrint('[AyahTimingService] ❌ No timing data for reciter=$reciterId');
+      MushafLibrary.logger.debug(
+        '[AyahTimingService] ❌ No timing data for reciter=$reciterId',
+      );
       return null;
     }
     try {
@@ -46,7 +46,7 @@ class AyahTimingService {
       final ayah = chapter.ayaTiming.firstWhere((a) => a.ayah == ayahNumber);
 
       // DEBUG: print what we found
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[AyahTimingService] getAyahTiming → '
         'reciter=$reciterId, chapter=$chapterNumber, ayah=$ayahNumber → '
         'start=${ayah.startTime}ms, end=${ayah.endTime}ms',
@@ -61,7 +61,7 @@ class AyahTimingService {
       ) {
         final t = chapter.ayaTiming[i];
         final marker = t.ayah == ayahNumber ? ' ◄◄◄' : '';
-        debugPrint(
+        MushafLibrary.logger.debug(
           '[AyahTimingService]   [$i] ayah=${t.ayah}, '
           'start=${t.startTime}ms, end=${t.endTime}ms$marker',
         );
@@ -69,7 +69,7 @@ class AyahTimingService {
 
       return ayah;
     } catch (_) {
-      debugPrint(
+      MushafLibrary.logger.debug(
         '[AyahTimingService] ❌ ayah=$ayahNumber not found in chapter=$chapterNumber',
       );
       return null;
